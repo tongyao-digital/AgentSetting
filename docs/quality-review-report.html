@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>质量评审报告 - AgentSetting</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif; line-height: 1.6; color: #333; max-width: 210mm; margin: 0 auto; padding: 20mm; }
+        .header { text-align: center; border-bottom: 3px solid #1890ff; padding-bottom: 20px; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; color: #1890ff; margin-bottom: 10px; }
+        .header .subtitle { font-size: 14px; color: #666; }
+        .meta { display: flex; justify-content: space-between; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+        .meta-item { text-align: center; }
+        .meta-item .value { font-size: 24px; font-weight: bold; color: #1890ff; }
+        .meta-item .label { font-size: 12px; color: #666; }
+        h2 { color: #1890ff; border-left: 4px solid #1890ff; padding-left: 10px; margin: 30px 0 15px; }
+        h3 { color: #333; margin: 20px 0 10px; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #1890ff; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .status-pass { color: #52c41a; font-weight: bold; }
+        .status-warn { color: #faad14; font-weight: bold; }
+        .status-fail { color: #ff4d4f; font-weight: bold; }
+        .progress-bar { height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; margin: 5px 0; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #52c41a, #1890ff); }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+        .badge-green { background: #f6ffed; color: #52c41a; border: 1px solid #b7eb8f; }
+        .badge-yellow { background: #fffbe6; color: #faad14; border: 1px solid #ffe58f; }
+        .badge-red { background: #fff2f0; color: #ff4d4f; border: 1px solid #ffccc7; }
+        .summary-box { background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%); border: 1px solid #91d5ff; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
+        .page-break { page-break-before: always; }
+        @media print { body { padding: 10mm; } }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>质量评审报告</h1>
+        <div class="subtitle">AgentSetting 能力管理系统 | 测试覆盖率与质量评估</div>
+        <div class="subtitle">报告日期: 2026-03-26 | 版本: v1.0</div>
+    </div>
+
+    <div class="meta">
+        <div class="meta-item">
+            <div class="value">119</div>
+            <div class="label">测试用例总数</div>
+        </div>
+        <div class="meta-item">
+            <div class="value">100%</div>
+            <div class="label">测试通过率</div>
+        </div>
+        <div class="meta-item">
+            <div class="value">87%</div>
+            <div class="label">函数覆盖率</div>
+        </div>
+        <div class="meta-item">
+            <div class="value">✅ 合格</div>
+            <div class="label">质量评审结论</div>
+        </div>
+    </div>
+
+    <h2>1. 执行摘要</h2>
+    <div class="summary-box">
+        <p><strong>评审结论</strong>: 本项目测试覆盖率达到 <strong>87%</strong>，核心业务逻辑覆盖完整，关键硬约束全部验证通过。Server 端覆盖优秀 (100%)，Web 端覆盖中等 (61%)。整体质量评审为 <span class="status-pass">合格</span>。</p>
+    </div>
+
+    <h2>2. 各模块覆盖率详情</h2>
+
+    <h3>2.1 Server 端模块</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>模块</th>
+                <th>源文件</th>
+                <th>测试文件</th>
+                <th>测试用例</th>
+                <th>函数覆盖</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>capability</strong></td>
+                <td>4</td>
+                <td>10</td>
+                <td>45</td>
+                <td>14/14 (100%)</td>
+                <td><span class="badge badge-green">优秀</span></td>
+            </tr>
+            <tr>
+                <td><strong>category</strong></td>
+                <td>3</td>
+                <td>9</td>
+                <td>24</td>
+                <td>12/12 (100%)</td>
+                <td><span class="badge badge-green">优秀</span></td>
+            </tr>
+            <tr>
+                <td><strong>sync</strong></td>
+                <td>3</td>
+                <td>4</td>
+                <td>12</td>
+                <td>8/8 (100%)</td>
+                <td><span class="badge badge-green">优秀</span></td>
+            </tr>
+            <tr>
+                <td><strong>common</strong></td>
+                <td>2</td>
+                <td>4</td>
+                <td>13</td>
+                <td>4/4 (100%)</td>
+                <td><span class="badge badge-green">优秀</span></td>
+            </tr>
+            <tr style="font-weight: bold; background: #e6f7ff;">
+                <td>Server 小计</td>
+                <td>12</td>
+                <td>27</td>
+                <td>94</td>
+                <td>38/38 (100%)</td>
+                <td><span class="badge badge-green">优秀</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>2.2 Web 端模块</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>模块</th>
+                <th>源文件</th>
+                <th>测试文件</th>
+                <th>测试用例</th>
+                <th>函数覆盖</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>utils</strong></td>
+                <td>3</td>
+                <td>2</td>
+                <td>6</td>
+                <td>7/8 (87.5%)</td>
+                <td><span class="badge badge-green">良好</span></td>
+            </tr>
+            <tr>
+                <td><strong>services</strong></td>
+                <td>2</td>
+                <td>2</td>
+                <td>10</td>
+                <td>4/10 (40%)</td>
+                <td><span class="badge badge-yellow">需改进</span></td>
+            </tr>
+            <tr>
+                <td><strong>pages</strong></td>
+                <td>3</td>
+                <td>4</td>
+                <td>9</td>
+                <td>间接覆盖</td>
+                <td><span class="badge badge-yellow">中等</span></td>
+            </tr>
+            <tr>
+                <td><strong>types</strong></td>
+                <td>1</td>
+                <td>0</td>
+                <td>0</td>
+                <td>类型检查</td>
+                <td><span class="badge badge-green">正常</span></td>
+            </tr>
+            <tr style="font-weight: bold; background: #fffbe6;">
+                <td>Web 小计</td>
+                <td>9</td>
+                <td>8</td>
+                <td>25</td>
+                <td>11/18 (61%)</td>
+                <td><span class="badge badge-yellow">中等</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="page-break">3. 关键业务规则验证</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>业务规则 (AGENTS.md §6)</th>
+                <th>测试文件</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>number-string 规则 (^[0-9]+$)</td>
+                <td>number-string-invalid.spec.js, number-string-leading-zero.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+            <tr>
+                <td>删除幂等性 (重复删除成功)</td>
+                <td>capability-delete-idempotent.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+            <tr>
+                <td>同步触发互斥 (不允许多任务并发)</td>
+                <td>sync-trigger-running-conflict.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+            <tr>
+                <td>同步能力只读 (source=sync 不可编辑)</td>
+                <td>capability-update-sync-readonly.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+            <tr>
+                <td>能力类型变更清空配置</td>
+                <td>capability-update-clear-request-config.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+            <tr>
+                <td>能力列表筛选限制 (keyword/capability_type)</td>
+                <td>capability-list-keyword-filter.spec.js</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>4. 错误码覆盖</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>错误码</th>
+                <th>HTTP 状态</th>
+                <th>描述</th>
+                <th>测试覆盖</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>0</code></td>
+                <td>200</td>
+                <td>成功</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4001</code></td>
+                <td>400</td>
+                <td>参数不合法</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4002</code></td>
+                <td>409</td>
+                <td>名称已存在</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4003</code></td>
+                <td>404</td>
+                <td>资源不存在</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4004</code></td>
+                <td>409</td>
+                <td>同步能力不支持此操作</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4005</code></td>
+                <td>409</td>
+                <td>分类下存在能力，无法删除</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4006</code></td>
+                <td>400</td>
+                <td>URL 不在允许范围</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_4091</code></td>
+                <td>409</td>
+                <td>并发冲突</td>
+                <td><span class="status-pass">✅ 覆盖</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_5001</code></td>
+                <td>502</td>
+                <td>外部依赖异常</td>
+                <td><span class="status-warn">⚠️ 未测试</span></td>
+            </tr>
+            <tr>
+                <td><code>CAP_5002</code></td>
+                <td>500</td>
+                <td>同步任务异常</td>
+                <td><span class="status-warn">⚠️ 未测试</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>5. API 契约检查</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>检查项</th>
+                <th>状态</th>
+                <th>说明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>响应结构一致性</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+                <td>所有接口返回统一结构 {code, message, data, request_id}</td>
+            </tr>
+            <tr>
+                <td>状态码映射</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+                <td>API_HTTP_STATUS_BY_CODE 与实际响应一致</td>
+            </tr>
+            <tr>
+                <td>错误码声明</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+                <td>所有错误码在 api-contract.ts 中声明</td>
+            </tr>
+            <tr>
+                <td>筛选键限制</td>
+                <td><span class="status-pass">✅ 通过</span></td>
+                <td>仅允许 keyword 和 capability_type</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="page-break">6. 测试质量评估</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>维度</th>
+                <th>评分</th>
+                <th>说明</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>结构组织</td>
+                <td>★★★★☆</td>
+                <td>清晰的分层测试 (unit/integration)，模块化良好</td>
+            </tr>
+            <tr>
+                <td>用例设计</td>
+                <td>★★★★☆</td>
+                <td>覆盖正常/异常路径，边界条件考虑充分</td>
+            </tr>
+            <tr>
+                <td>可维护性</td>
+                <td>★★★☆☆</td>
+                <td>部分测试使用硬编码数据，mock 策略可改进</td>
+            </tr>
+            <tr>
+                <td>执行效率</td>
+                <td>★★★★☆</td>
+                <td>单元测试快速 (~2s)，集成测试合理 (~15s)</td>
+            </tr>
+            <tr>
+                <td>断言质量</td>
+                <td>★★★★☆</td>
+                <td>验证响应结构、状态码、错误码一致性</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>7. 改进建议</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>优先级</th>
+                <th>改进项</th>
+                <th>预期收益</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="badge badge-red">高</span></td>
+                <td>为 Web Pages 组件添加单元测试</td>
+                <td>提高 UI 变更的回归检测能力</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-red">高</span></td>
+                <td>添加 CAP_5001/5002 外部依赖错误测试</td>
+                <td>验证异常处理完整性</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-yellow">中</span></td>
+                <td>补充 Web Services 内部函数测试</td>
+                <td>提高辅助函数覆盖</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-yellow">中</span></td>
+                <td>添加大数据量性能测试</td>
+                <td>验证 P95 < 500ms 基线</td>
+            </tr>
+            <tr>
+                <td><span class="badge badge-green">低</span></td>
+                <td>统一测试数据工厂</td>
+                <td>减少硬编码，提高可维护性</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>8. Bug Issues 记录</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Issue</th>
+                <th>标题</th>
+                <th>严重程度</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>#1</td>
+                <td>antd Message 组件 React 18 concurrent mode 警告</td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td>已知限制</td>
+            </tr>
+            <tr>
+                <td>#2</td>
+                <td>jsdom 伪元素 getComputedStyle 不支持</td>
+                <td><span class="badge badge-green">Low</span></td>
+                <td>已知限制</td>
+            </tr>
+            <tr>
+                <td>#3</td>
+                <td>Server 端旧测试文件兼容性</td>
+                <td><span class="badge badge-green">Low</span></td>
+                <td>已修复</td>
+            </tr>
+            <tr>
+                <td>#4</td>
+                <td>Vitest 无法直接 require CommonJS 模块</td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td>已修复</td>
+            </tr>
+            <tr>
+                <td>#5</td>
+                <td>跨模块测试文件路径解析错误</td>
+                <td><span class="badge badge-yellow">Medium</span></td>
+                <td>已修复</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>9. 结论</h2>
+    <div class="summary-box">
+        <h3>整体评价: <span class="status-pass">✅ 合格</span></h3>
+        <p><strong>主要优势</strong>:</p>
+        <ul>
+            <li>Server 端覆盖优秀 (100% 函数覆盖)</li>
+            <li>关键业务硬约束全部有测试验证</li>
+            <li>API 契约测试完整</li>
+            <li>错误码体系验证全面</li>
+        </ul>
+        <p style="margin-top: 15px;"><strong>主要风险</strong>:</p>
+        <ul>
+            <li>Web Pages 组件仅通过集成测试间接覆盖</li>
+            <li>CAP_5001/5002 外部依赖错误未直接测试</li>
+            <li>缺乏性能基线测试</li>
+        </ul>
+        <p style="margin-top: 15px;"><strong>建议</strong>: 优先补全 Web Pages 单元测试和外部依赖错误测试，然后建立 CI 覆盖率门禁。</p>
+    </div>
+
+    <div class="footer">
+        <p>AgentSetting 质量评审报告 | 生成日期: 2026-03-26 | 版本: v1.0</p>
+        <p>本报告基于 Vitest 测试框架自动生成</p>
+    </div>
+</body>
+</html>

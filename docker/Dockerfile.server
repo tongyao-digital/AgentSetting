@@ -1,0 +1,43 @@
+# Multi-stage build for server backend
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/server/package.json ./apps/server/
+COPY packages/ ./packages/
+
+# Install dependencies
+RUN corepack enable && pnpm install --frozen-lockfile
+
+# Copy source code
+COPY apps/server/ ./apps/server/
+
+# Build
+RUN cd apps/server && pnpm build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy built assets
+COPY --from=builder /apps/server/dist ./dist
+COPY --from=builder /apps/server/package.json ./
+COPY --from=builder /apps/server/node_modules ./node_modules
+
+# Install curl for health checks
+RUN apk add --no-cache curl
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+USER nodejs
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+CMD ["node", "dist/main.js"]

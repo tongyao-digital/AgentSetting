@@ -1,0 +1,467 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY_WEB: happy-forest/web
+  ECR_REPOSITORY_SERVER: happy-forest/server
+  ECS_CLUSTER_TEST: happy-forest-test-cluster
+  ECS_SERVICE_WEB_TEST: happy-forest-test-web
+  ECS_SERVICE_SERVER_TEST: happy-forest-test-server
+  ECS_CLUSTER_PROD: happy-forest-prod-cluster
+  ECS_SERVICE_WEB_PROD: happy-forest-prod-web
+  ECS_SERVICE_SERVER_PROD: happy-forest-prod-server
+  RDS_INSTANCE_TEST: happy-forest-test-db
+  RDS_INSTANCE_PROD: happy-forest-prod-db
+  SMOKETEST_URL: https://test.happy-forest.example.com/health
+
+jobs:
+  # ==================== CI Jobs ====================
+  lint:
+    name: Lint & Contract Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run contract check
+        run: pnpm contract:check
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run type check
+        run: pnpm typecheck
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run web unit tests
+        run: cd apps/web && pnpm test
+
+      - name: Run server unit tests
+        run: cd apps/server && pnpm test:unit
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: |
+            apps/web/coverage/
+            apps/server/coverage/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run server integration tests
+        run: cd apps/server && pnpm test:integration
+
+      - name: Run web integration tests
+        run: cd apps/web && pnpm test -- tests/app.spec.tsx tests/category-management.spec.tsx tests/capability-management.spec.tsx tests/sync-job-panel.spec.tsx
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run npm audit
+        run: pnpm audit --audit-level=high
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, unit-tests, integration-tests, security-scan]
+    outputs:
+      web-image: ${{ steps.build-web.outputs.image }}
+      server-image: ${{ steps.build-server.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push web image
+        id: build-web
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG -f docker/Dockerfile.web .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_WEB:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Build, tag, and push server image
+        id: build-server
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG -f docker/Dockerfile.server .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY_SERVER:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Scan web image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-web.outputs.image }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+      - name: Scan server image for vulnerabilities
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.build-server.outputs.image }}
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+
+  # ==================== Stage Deployment ====================
+  deploy-stage:
+    name: Deploy to Stage
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    environment: stage
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS service (web)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER_TEST }} \
+            --service ${{ env.ECS_SERVICE_WEB_TEST }} \
+            --force-new-deployment
+
+      - name: Update ECS service (server)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER_TEST }} \
+            --service ${{ env.ECS_SERVICE_SERVER_TEST }} \
+            --force-new-deployment
+
+      - name: Wait for deployment to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_TEST }} \
+            --services ${{ env.ECS_SERVICE_WEB_TEST }}
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_TEST }} \
+            --services ${{ env.ECS_SERVICE_SERVER_TEST }}
+
+  smoke-test-stage:
+    name: Smoke Test (Stage)
+    runs-on: ubuntu-latest
+    needs: [deploy-stage]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          # Health check
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" ${{ env.SMOKETEST_URL }})
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Health check failed with status $HTTP_STATUS"
+            exit 1
+          fi
+
+          # API endpoints check
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.SMOKETEST_URL }}/api/v1/ability-management/categories")
+          if [ "$API_STATUS" -ne 200 ]; then
+            echo "API check failed with status $API_STATUS"
+            exit 1
+          fi
+
+          echo "Smoke tests passed!"
+
+  # ==================== Production Deployment ====================
+  backup-prod:
+    name: Backup Production Database
+    runs-on: ubuntu-latest
+    needs: [smoke-test-stage]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create RDS snapshot
+        id: backup
+        run: |
+          SNAPSHOT_ID="${{ env.RDS_INSTANCE_PROD }}-$(date +%Y%m%d-%H%M%S)"
+          aws rds create-db-snapshot \
+            --db-instance-identifier ${{ env.RDS_INSTANCE_PROD }} \
+            --db-snapshot-identifier $SNAPSHOT_ID
+          echo "snapshot_id=$SNAPSHOT_ID" >> $GITHUB_OUTPUT
+
+      - name: Wait for snapshot completion
+        run: |
+          aws rds wait db-snapshot-available \
+            --db-snapshot-identifier ${{ steps.backup.outputs.snapshot_id }}
+
+      - name: Verify snapshot
+        run: |
+          aws rds describe-db-snapshots \
+            --db-snapshot-identifier ${{ steps.backup.outputs.snapshot_id }} \
+            --query 'DBSnapshots[0].Status' \
+            --output text
+
+  deploy-prod:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [backup-prod]
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS service (web)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --service ${{ env.ECS_SERVICE_WEB_PROD }} \
+            --force-new-deployment
+
+      - name: Update ECS service (server)
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --service ${{ env.ECS_SERVICE_SERVER_PROD }} \
+            --force-new-deployment
+
+      - name: Wait for deployment to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_WEB_PROD }}
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_SERVER_PROD }}
+
+  smoke-test-prod:
+    name: Smoke Test (Production)
+    runs-on: ubuntu-latest
+    needs: [deploy-prod]
+    steps:
+      - name: Run production smoke tests
+        run: |
+          PROD_URL="https://prod.happy-forest.example.com/health"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" $PROD_URL)
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "Production health check failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "Production smoke tests passed!"
+
+  # ==================== Rollback Job ====================
+  rollback-prod:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    needs: [deploy-prod]
+    if: failure()
+    environment: production
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback ECS service (web)
+        run: |
+          # Get previous task definition
+          TASK_DEF=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_WEB_PROD }} \
+            --query 'services[0].taskDefinition' \
+            --output text)
+          
+          # Get previous revision
+          PREV_REVISION=$(aws ecs list-task-definitions \
+            --family-prefix $(echo $TASK_DEF | cut -d'/' -f2 | cut -d':' -f1) \
+            --sort DESC \
+            --query 'taskDefinitionArns[1]' \
+            --output text)
+          
+          if [ "$PREV_REVISION" != "None" ]; then
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER_PROD }} \
+              --service ${{ env.ECS_SERVICE_WEB_PROD }} \
+              --task-definition $PREV_REVISION
+          fi
+
+      - name: Rollback ECS service (server)
+        run: |
+          TASK_DEF=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_SERVER_PROD }} \
+            --query 'services[0].taskDefinition' \
+            --output text)
+          
+          PREV_REVISION=$(aws ecs list-task-definitions \
+            --family-prefix $(echo $TASK_DEF | cut -d'/' -f2 | cut -d':' -f1) \
+            --sort DESC \
+            --query 'taskDefinitionArns[1]' \
+            --output text)
+          
+          if [ "$PREV_REVISION" != "None" ]; then
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER_PROD }} \
+              --service ${{ env.ECS_SERVICE_SERVER_PROD }} \
+              --task-definition $PREV_REVISION
+          fi
+
+      - name: Wait for rollback to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_WEB_PROD }}
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER_PROD }} \
+            --services ${{ env.ECS_SERVICE_SERVER_PROD }}
+
+      - name: Notify rollback completion
+        run: |
+          echo "Production rollback completed. Please investigate the deployment failure."

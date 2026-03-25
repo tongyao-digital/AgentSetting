@@ -1,0 +1,20 @@
+{
+  "processes": [
+    {
+      "name": "web-dev",
+      "pid": 21424,
+      "cwd": "D:\\DC code\\agantSetting\\apps\\web",
+      "command": "npm run dev",
+      "logFile": "D:\\DC code\\agantSetting\\.dev-skills\\logs\\web-dev.log",
+      "startedAt": "2026-03-25T19:19:21.190Z"
+    },
+    {
+      "name": "server-dev",
+      "pid": 13536,
+      "cwd": "D:\\DC code\\agantSetting\\apps\\server",
+      "command": "npm run dev",
+      "logFile": "D:\\DC code\\agantSetting\\.dev-skills\\logs\\server-dev.log",
+      "startedAt": "2026-03-25T19:23:07.920Z"
+    }
+  ]
+}

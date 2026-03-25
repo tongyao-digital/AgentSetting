@@ -1,4 +1,24 @@
 {
+  "private": true,
+  "bin": {
+    "agentctl": "./scripts/agentctl.mjs"
+  },
+  "scripts": {
+    "agentctl": "node ./scripts/agentctl.mjs",
+    "doctor": "node ./scripts/agentctl.mjs doctor",
+    "dev:up": "node ./scripts/agentctl.mjs dev up",
+    "dev:down": "node ./scripts/agentctl.mjs dev down",
+    "db:migrate": "node ./scripts/agentctl.mjs db migrate",
+    "db:seed": "node ./scripts/agentctl.mjs db seed",
+    "db:reset": "node ./scripts/agentctl.mjs db reset",
+    "test:unit": "node ./scripts/agentctl.mjs test unit",
+    "test:integration": "node ./scripts/agentctl.mjs test integration",
+    "test:all": "node ./scripts/agentctl.mjs test all",
+    "contract:check": "node ./scripts/agentctl.mjs contract check",
+    "lint": "node ./scripts/agentctl.mjs lint",
+    "typecheck": "node ./scripts/agentctl.mjs typecheck",
+    "dev-skills": "node ./packages/dev-skills/bin/dev-skills.mjs"
+  },
   "dependencies": {
     "pdf-parse": "^2.4.5"
   }

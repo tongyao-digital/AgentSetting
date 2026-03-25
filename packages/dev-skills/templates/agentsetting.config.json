@@ -1,0 +1,29 @@
+﻿{
+  "project": "AgentSetting",
+  "required_paths": [
+    "apps/web",
+    "apps/server",
+    "docs"
+  ],
+  "test_sets": {
+    "unit": [
+      "tests/api-client.spec.ts",
+      "tests/capability-form.spec.ts",
+      "tests/capability-utils.spec.ts"
+    ],
+    "integration_web": [
+      "tests/app.spec.tsx",
+      "tests/category-management.spec.tsx",
+      "tests/capability-management.spec.tsx",
+      "tests/sync-job-panel.spec.tsx"
+    ]
+  },
+  "contract": {
+    "frontend_contract_file": "apps/web/src/types/api-contract.ts",
+    "backend_entry_file": "apps/server/src/app.js",
+    "allowed_capability_filters": [
+      "keyword",
+      "capability_type"
+    ]
+  }
+}
